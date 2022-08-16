@@ -17,8 +17,8 @@
 #import <WebRTC/RTCPeerConnection.h>
 #import <WebRTC/RTCAudioTrack.h>
 #import <WebRTC/RTCVideoTrack.h>
-#import <WebRTC/RTCVideoDecoderFactory.h>
-#import <WebRTC/RTCVideoEncoderFactory.h>
+#import <WebRTC/RTCDefaultVideoDecoderFactory.h>
+#import <WebRTC/RTCDefaultVideoEncoderFactory.h>
 
 static NSString *const kEventPeerConnectionSignalingStateChanged = @"peerConnectionSignalingStateChanged";
 static NSString *const kEventPeerConnectionStateChanged = @"peerConnectionStateChanged";
@@ -30,12 +30,21 @@ static NSString *const kEventPeerConnectionDidOpenDataChannel = @"peerConnection
 static NSString *const kEventDataChannelStateChanged = @"dataChannelStateChanged";
 static NSString *const kEventDataChannelReceiveMessage = @"dataChannelReceiveMessage";
 static NSString *const kEventMediaStreamTrackMuteChanged = @"mediaStreamTrackMuteChanged";
+static NSString *const kEventTransceiverStopSuccessful = @"transceiverStopSuccessful";
+static NSString *const kEventTransceiverOnError = @"transceiverOnError";
+static NSString *const kEventPeerConnectionOnRemoveTrack = @"peerConnectionOnRemoveTrack";
+static NSString *const kEventPeerConnectionOnRemoveTrackSuccessful = @"peerConnectionOnRemoveTrackSuccessful";
+static NSString *const kEventPeerConnectionOnTrack = @"peerConnectionOnTrack";
+static NSString *const kEventPeerConnectionOnError = @"peerConnectionOnError";
+static NSString *const kEventMediaStreamTrackOnMuteChanged = @"mediaStreamTrackOnMuteChanged";
 
 @interface WebRTCModule : RCTEventEmitter <RCTBridgeModule>
 
 @property(nonatomic, strong) dispatch_queue_t workerQueue;
 
 @property (nonatomic, strong) RTCPeerConnectionFactory *peerConnectionFactory;
+@property (nonatomic, strong) id<RTCVideoEncoderFactory> decoderFactory;
+@property (nonatomic, strong) id<RTCVideoEncoderFactory> encoderFactory;
 
 @property (nonatomic, strong) NSMutableDictionary<NSNumber *, RTCPeerConnection *> *peerConnections;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, RTCMediaStream *> *localStreams;
