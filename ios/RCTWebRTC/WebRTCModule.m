@@ -7,6 +7,7 @@
 #import <React/RCTLog.h>
 #import <React/RCTUtils.h>
 
+#import <WebRTC/RTCFieldTrials.h>
 #import "WebRTCModule+RTCPeerConnection.h"
 #import "WebRTCModule.h"
 #import "WebRTCModuleOptions.h"
@@ -55,6 +56,11 @@
 
         // Initialize logging.
         RTCSetMinDebugLogLevel(loggingSeverity);
+        
+        // Initialize field trial for solving audio issues after hold when using CallKit.
+        // See: https://bugs.chromium.org/p/webrtc/issues/detail?id=8126#c35
+        fieldTrials = @{ @"WebRTC-Audio-iOS-Holding" : kRTCFieldTrialEnabledValue };
+        RTCInitFieldTrialDictionary(fieldTrials);
 
         if (encoderFactory == nil) {
             encoderFactory = [[RTCDefaultVideoEncoderFactory alloc] init];
