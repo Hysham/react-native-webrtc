@@ -12,12 +12,19 @@ const FACING_MODES = [ 'user', 'environment' ];
 
 const ASPECT_RATIO = 16 / 9;
 
-const STANDARD_OA_OPTIONS = {
+const STANDARD_OFFER_OPTIONS = {
     icerestart: 'IceRestart',
     offertoreceiveaudio: 'OfferToReceiveAudio',
     offertoreceivevideo: 'OfferToReceiveVideo',
     voiceactivitydetection: 'VoiceActivityDetection'
 };
+
+const SDP_TYPES = [
+    'offer',
+    'pranswer',
+    'answer',
+    'rollback'
+];
 
 function getDefaultMediaConstraints(mediaType) {
     switch (mediaType) {
@@ -35,7 +42,7 @@ function extractString(constraints, prop) {
     const type = typeof value;
 
     if (type === 'object') {
-        for (const v of ['exact', 'ideal']) {
+        for (const v of [ 'exact', 'ideal' ]) {
             if (value[v]) {
                 return value[v];
             }
@@ -52,7 +59,7 @@ function extractNumber(constraints, prop) {
     if (type === 'number') {
         return Number.parseInt(value);
     } else if (type === 'object') {
-        for (const v of ['exact', 'ideal', 'min', 'max']) {
+        for (const v of [ 'exact', 'ideal', 'max', 'min' ]) {
             if (value[v]) {
                 return Number.parseInt(value[v]);
             }
@@ -64,6 +71,7 @@ function normalizeMediaConstraints(constraints, mediaType) {
     switch (mediaType) {
         case 'audio':
             return constraints;
+
         case 'video': {
             const c = {
                 deviceId: extractString(constraints, 'deviceId'),
@@ -96,6 +104,7 @@ function normalizeMediaConstraints(constraints, mediaType) {
 
             return c;
         }
+
         default:
             throw new TypeError(`Invalid media type: ${mediaType}`);
     }
@@ -133,12 +142,22 @@ export function deepClone<T>(obj: T): T {
 }
 
 /**
- * Normalize options passed to createOffer() / createAnswer().
+ * Checks whether an SDP type is valid or not.
+ *
+ * @param type SDP type to check.
+ * @returns Whether the SDP type is valid or not.
+ */
+export function isSdpTypeValid(type: string): boolean {
+    return SDP_TYPES.includes(type);
+}
+
+/**
+ * Normalize options passed to createOffer().
  *
  * @param options - user supplied options
  * @return Normalized options
  */
-export function normalizeOfferAnswerOptions(options: object = {}): object {
+export function normalizeOfferOptions(options: object = {}): object {
     const newOptions = {};
 
     if (!options) {
@@ -147,8 +166,9 @@ export function normalizeOfferAnswerOptions(options: object = {}): object {
 
     // Convert standard options into WebRTC internal constant names.
     // See: https://github.com/jitsi/webrtc/blob/0cd6ce4de669bed94ba47b88cb71b9be0341bb81/sdk/media_constraints.cc#L113
-    for (const [key, value] of Object.entries(options)) {
-        const newKey = STANDARD_OA_OPTIONS[key.toLowerCase()];
+    for (const [ key, value ] of Object.entries(options)) {
+        const newKey = STANDARD_OFFER_OPTIONS[key.toLowerCase()];
+
         if (newKey) {
             newOptions[newKey] = String(Boolean(value));
         }
@@ -163,7 +183,7 @@ export function normalizeOfferAnswerOptions(options: object = {}): object {
 export function normalizeConstraints(constraints) {
     const c = deepClone(constraints);
 
-    for (const mediaType of ['audio', 'video']) {
+    for (const mediaType of [ 'audio', 'video' ]) {
         const mediaTypeConstraints = c[mediaType];
         const typeofMediaTypeConstraints = typeof mediaTypeConstraints;
 
