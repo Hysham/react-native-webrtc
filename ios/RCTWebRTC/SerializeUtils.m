@@ -26,20 +26,22 @@
     NSMutableArray *transceiverUpdates = [NSMutableArray new];
 
     for (RTCRtpTransceiver *transceiver in peerConnection.transceivers) {
+        NSMutableDictionary *transceiverUpdate = [NSMutableDictionary new];
+
         RTCRtpTransceiverDirection currentDirection;
-        if ([transceiver currentDirection:&currentDirection]) {
-            NSMutableDictionary *transceiverUpdate = [NSMutableDictionary new];
-            transceiverUpdate[@"transceiverId"] = transceiver.sender.senderId;
-            transceiverUpdate[@"mid"] = transceiver.mid;
+        BOOL hasCurrentDirection = [transceiver currentDirection:&currentDirection];
+        if (hasCurrentDirection) {
             NSString *currentDirectionSerialized = [SerializeUtils serializeDirection:currentDirection];
             transceiverUpdate[@"currentDirection"] = currentDirectionSerialized;
-            transceiverUpdate[@"isStopped"] = [NSNumber numberWithBool:transceiver.isStopped];
-            transceiverUpdate[@"senderRtpParameters"] = [SerializeUtils parametersToJSON:transceiver.sender.parameters];
-            transceiverUpdate[@"receiverRtpParameters"] =
-                [SerializeUtils parametersToJSON:transceiver.receiver.parameters];
-
-            [transceiverUpdates addObject:transceiverUpdate];
         }
+
+        transceiverUpdate[@"transceiverId"] = transceiver.sender.senderId;
+        transceiverUpdate[@"mid"] = transceiver.mid;
+        transceiverUpdate[@"isStopped"] = [NSNumber numberWithBool:transceiver.isStopped];
+        transceiverUpdate[@"senderRtpParameters"] = [SerializeUtils parametersToJSON:transceiver.sender.parameters];
+        transceiverUpdate[@"receiverRtpParameters"] = [SerializeUtils parametersToJSON:transceiver.receiver.parameters];
+
+        [transceiverUpdates addObject:transceiverUpdate];
     }
 
     return transceiverUpdates;
@@ -128,13 +130,7 @@
         }
 
         if (codec.parameters.count) {
-            NSMutableArray *parts = [NSMutableArray arrayWithCapacity:codec.parameters.count];
-            [codec.parameters
-                enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull value, BOOL *_Nonnull stop) {
-                    [parts addObject:[NSString stringWithFormat:@"%@=%@", key, value]];
-                }];
-
-            codecDictionary[@"sdpFmtpLine"] = [parts componentsJoinedByString:@";"];
+            codecDictionary[@"sdpFmtpLine"] = [self serializeSdpParameters:codec.parameters];
         }
 
         [codecs addObject:codecDictionary];
@@ -172,6 +168,47 @@
         @"readyState" : readyState,
         @"remote" : [NSNumber numberWithBool:YES],
     };
+}
+
++ (NSDictionary *)capabilitiesToJSON:(RTCRtpCapabilities *)capabilities {
+    NSMutableArray *codecs = [NSMutableArray new];
+
+    for (RTCRtpCodecCapability *codec in capabilities.codecs) {
+        [codecs addObject:[self codecCapabilityToJSON:codec]];
+    }
+
+    return @{@"codecs" : codecs};
+}
+
++ (NSDictionary *)codecCapabilityToJSON:(RTCRtpCodecCapability *)codec {
+    NSMutableDictionary *codecDictionary = [NSMutableDictionary new];
+
+    codecDictionary[@"payloadType"] = codec.preferredPayloadType;
+    codecDictionary[@"mimeType"] = codec.mimeType;
+    codecDictionary[@"clockRate"] = codec.clockRate;
+
+    if (codec.numChannels) {
+        codecDictionary[@"channels"] = codec.numChannels;
+    }
+
+    if (codec.parameters.count) {
+        codecDictionary[@"sdpFmtpLine"] = [self serializeSdpParameters:codec.parameters];
+    }
+
+    return codecDictionary;
+}
+
++ (NSString *)serializeSdpParameters:(NSDictionary *)parameters {
+    if (parameters == nil || parameters.count == 0) {
+        return nil;
+    }
+
+    NSMutableArray *parts = [NSMutableArray arrayWithCapacity:parameters.count];
+    [parameters enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull value, BOOL *_Nonnull stop) {
+        [parts addObject:[NSString stringWithFormat:@"%@=%@", key, value]];
+    }];
+
+    return [parts componentsJoinedByString:@";"];
 }
 
 + (NSString *)serializeDirection:(RTCRtpTransceiverDirection)direction {

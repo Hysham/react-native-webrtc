@@ -32,6 +32,27 @@ If you plan to also support Bluetooth devices then also add the following.
 <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 ```
 
+### Screen-sharing
+
+Starting with version 118.0.2 a foreground service is included in this library in order to make
+screen-sharing possible under Android 14 rules.
+
+If you want to enable it, first declare the following permissions:
+
+```xml
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+```
+
+Then enable the builtin service as follows, by adding the following code very early in your
+application, in your main activity's `onCreate` for instance:
+
+```java
+    // Initialize the WebRTC module options.
+    WebRTCModuleOptions options = WebRTCModuleOptions.getInstance();
+    options.enableMediaProjectionService = true;
+```
+
 ## Enable Java 8 Support
 
 In `android/app/build.gradle` add the following inside the `android` section.
@@ -62,6 +83,14 @@ In `android/app/main/AndroidManifest.xml` add the following inside the `<applica
 <service
 	android:name="app.notifee.core.ForegroundService"
 	android:foregroundServiceType="mediaProjection|camera|microphone" />
+```
+
+Additionally, add the respective foreground service type permissions before the `<application>` section.
+
+```xml
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 ```
 
 The following will create an ongoing persistent notification which also comes with a foreground service.  
@@ -104,8 +133,8 @@ try {
 };
 ```
 
-Lastly you'll need to add this to your projects main `index.js` file.  
-Otherwise you'll receive errors relating to the foreground service not being registered correctly.  
+Lastly, you'll need to add this to your project's main `index.js` file.  
+Otherwise, you'll receive errors relating to the foreground service not being registered correctly.  
 
 ```javascript
 notifee.registerForegroundService( notification => {
@@ -171,7 +200,7 @@ java.lang.Thread in run at line 764
 
 From a more specific [similar Error](https://github.com/msgpack/msgpack-java/issues/516) explaining FloatBuffer change in java 8 and in java 11.
 
-We verifying that the jar files in android/libs/ are compiled for JRE11 (Major version 55), 
+We are verifying that the jar files in android/libs/ are compiled for JRE11 (Major version 55), 
 
 We think that the library being compiled against the JRE 11 runtime and osVersion 9 seems to use the Java 8 context where the classByteBuffer inherits the position method from Buffer and has a return type of java.nio.Buffer. 
 (On Java 11 the method is overridden with an implementation that returns java.nio.ByteBuffer.)
