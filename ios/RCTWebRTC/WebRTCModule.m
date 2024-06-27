@@ -6,6 +6,7 @@
 #import <React/RCTEventDispatcher.h>
 #import <React/RCTLog.h>
 #import <React/RCTUtils.h>
+#import <WebRTC/RTCFieldTrials.h>
 
 #import "WebRTCModule+RTCPeerConnection.h"
 #import "WebRTCModule.h"
@@ -43,15 +44,17 @@
         id<RTCAudioDevice> audioDevice = options.audioDevice;
         id<RTCVideoDecoderFactory> decoderFactory = options.videoDecoderFactory;
         id<RTCVideoEncoderFactory> encoderFactory = options.videoEncoderFactory;
-        NSDictionary *fieldTrials = options.fieldTrials;
+        // NSDictionary *fieldTrials = options.fieldTrials;
         RTCLoggingSeverity loggingSeverity = options.loggingSeverity;
 
         // Initialize field trials.
-        if (fieldTrials == nil) {
-            // Fix for dual-sim connectivity:
-            // https://bugs.chromium.org/p/webrtc/issues/detail?id=10966
-            fieldTrials = @{kRTCFieldTrialUseNWPathMonitor : kRTCFieldTrialEnabledValue};
-        }
+        // if (fieldTrials == nil) {
+        //     // Fix for dual-sim connectivity:
+        //     // https://bugs.chromium.org/p/webrtc/issues/detail?id=10966
+        //     fieldTrials = @{kRTCFieldTrialUseNWPathMonitor : kRTCFieldTrialEnabledValue};
+        // }
+
+        NSDictionary *fieldTrials = @{ @"WebRTC-Audio-iOS-Holding" : kRTCFieldTrialEnabledValue };
         RTCInitFieldTrialDictionary(fieldTrials);
 
         // Initialize logging.
